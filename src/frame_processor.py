@@ -17,6 +17,11 @@ def process_video(video_path, target_fps=5, resize_dim=(1280, 720)):
     # Open the video file
     cap = cv2.VideoCapture(video_path)
 
+    # Check if the video file was opened successfully
+    if not cap.isOpened():
+        print(f"Error opening video file: {video_path}")
+        return []
+
     # Get video properties
     original_fps = cap.get(cv2.CAP_PROP_FPS)                # Get the original frames per second
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))   # Get the total number of frames
