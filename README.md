@@ -287,7 +287,16 @@ output/
 
 ## 🔍 Design Decisions & Rationale
 
-### Weighted Average Over Largest Motion Box
+### 1. Frame Differencing Over Optical Flow
+
+**Decision:** Simple frame differencing for motion detection  
+**Rationale:**
+
+- Computationally efficient for real-time processing
+- Sufficient accuracy for sports video tracking
+- Easy to tune parameters for different sports
+
+### 2. Weighted Average Over Largest Motion Box
 
 **Decision:** Weighted average of all motion boxes for ROI calculation  
 **Initial Approach:** Tested largest motion box strategy first  
@@ -298,6 +307,24 @@ output/
 - **Smoother Tracking:** Reduces camera jumps between different large motions
 - **More Natural Movement:** Camera positioning feels more intuitive and professional
 - **Handles Multiple Actions:** Works well when action is distributed across multiple areas
+
+### 3. Exponential Smoothing
+
+**Decision:** Simple exponential moving average for viewport smoothing  
+**Rationale:**
+
+- Balances responsiveness with smoothness
+- Single parameter tuning (smoothing_factor)
+- Computationally lightweight
+
+### 4. Fixed Viewport Size
+
+**Decision:** Constant 720×480 viewport dimensions  
+**Rationale:**
+
+- Mimics real broadcast camera behavior
+- Consistent output video format
+- Simplifies boundary calculations
 
 ## 🚧 Challenges Encountered
 
@@ -321,6 +348,27 @@ output/
 **Solution:** Weighted average approach where larger motions have more influence  
 **Implementation:** Each motion box weighted by its area (w×h) in center calculation  
 **Result:** Camera naturally follows the "center of action" rather than jumping between regions
+
+## 🔮 Future Enhancements
+
+### Machine Learning Integration:
+
+1. **Deep Learning Motion Detection:** CNN-based motion region detection
+2. **Attention Mechanisms:** Learning-based region of interest selection
+3. **Sport-Specific Models:** Trained models for different sports
+
+### Short-term Improvements:
+
+1. **Multi-Sport Optimization:** Sport-specific parameter tuning
+2. **Confidence Scoring:** Motion detection confidence metrics
+3. **Real-time Processing:** Live video stream support
+
+### Advanced Features:
+
+1. **Object-Specific Tracking:** Ball detection and dedicated ball tracking
+2. **Player Recognition:** Individual player identification and tracking
+3. **Predictive Tracking:** Use motion vectors to anticipate movement
+4. **Audio Integration:** Combine audio cues with visual motion detection
 
 ## 🧪 Testing & Validation
 
