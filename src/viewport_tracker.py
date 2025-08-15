@@ -7,36 +7,54 @@ import cv2
 import numpy as np
 
 
+# This function calculates the region of interest (ROI) for the viewport tracker.
+# It chooses a strategy for determining the main area of interest.
+# strategy could be the largest motion box, a combination of nearby boxes, or a weighted average of all motion boxes.
+# @param motion_boxes: List of motion detection bounding boxes
+# @param frame_shape: Shape of the video frame (height, width)
+# @return: Tuple (roi_center_x, roi_center_y, w, h) representing the region of interest center point and dimensions
 def calculate_region_of_interest(motion_boxes, frame_shape):
-    """
-    Calculate the primary region of interest based on motion boxes.
-
-    Args:
-        motion_boxes: List of motion detection bounding boxes
-        frame_shape: Shape of the video frame (height, width)
-
-    Returns:
-        Tuple (x, y, w, h) representing the region of interest center point and dimensions
-    """
-    # TODO: Implement region of interest calculation
-    # 1. Choose a strategy for determining the main area of interest
-    #    - You could use the largest motion box
-    #    - Or combine nearby boxes
-    #    - Or use a weighted average of all motion boxes
-    # 2. Return the coordinates of the chosen region
-
-    # Example starter code:
+    
     if not motion_boxes:
         # If no motion is detected, use the center of the frame
         height, width = frame_shape[:2]
-        return (width // 2, height // 2, 0, 0)
-
-    # Your implementation here
-    largest_box = max(motion_boxes, key=lambda box: box[2] * box[3])
-    x, y, w, h = largest_box
-    cx = x + w // 2
-    cy = y + h // 2
-    return (cx, cy, w, h)  # Placeholder
+        default_size = min(width, height) // 6
+        return (width // 2, height // 2, default_size, default_size)
+    
+    # Strategy: weighted average of motion boxes, with larger boxes having more influence
+    total_weight = 0
+    weighted_x = 0
+    weighted_y = 0
+    total_width = 0
+    total_height = 0
+    
+    for (x, y, w, h) in motion_boxes:
+        # Calculate center of this motion box
+        center_x = x + w // 2
+        center_y = y + h // 2
+        # Use area as weight (larger motion regions are more important)
+        weight = w * h
+        # Update weighted sums
+        weighted_x += center_x * weight  # weighted_x is the sum of x coordinates weighted by area
+        weighted_y += center_y * weight  # weighted_y is the sum of y coordinates weighted by area
+        total_weight += weight
+        # Accumulate widths and heights for averaging
+        total_width += w
+        total_height += h
+    
+    if total_weight > 0:
+        # Calculate weighted average coordinates
+        roi_center_x = int(weighted_x / total_weight)  # roi_center_x is the weighted average x coordinate
+        roi_center_y = int(weighted_y / total_weight)  # roi_center_y is the weighted average y coordinate
+        # Calculate average dimensions
+        avg_width = int(total_width / len(motion_boxes))
+        avg_height = int(total_height / len(motion_boxes))
+        return (roi_center_x, roi_center_y, avg_width, avg_height)
+    else:
+        # Fallback to center of frame
+        height, width = frame_shape[:2]
+        default_size = min(width, height) // 6
+        return (width // 2, height // 2, default_size, default_size)
 
 def track_viewport(frames, motion_results, viewport_size, smoothing_factor=0.3):
     """
