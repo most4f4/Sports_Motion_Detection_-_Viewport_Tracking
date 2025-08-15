@@ -32,9 +32,11 @@ def calculate_region_of_interest(motion_boxes, frame_shape):
         return (width // 2, height // 2, 0, 0)
 
     # Your implementation here
-
-    return (0, 0, 0, 0)  # Placeholder
-
+    largest_box = max(motion_boxes, key=lambda box: box[2] * box[3])
+    x, y, w, h = largest_box
+    cx = x + w // 2
+    cy = y + h // 2
+    return (cx, cy, w, h)  # Placeholder
 
 def track_viewport(frames, motion_results, viewport_size, smoothing_factor=0.3):
     """
@@ -59,16 +61,41 @@ def track_viewport(frames, motion_results, viewport_size, smoothing_factor=0.3):
     # 3. Ensure the viewport stays within the frame boundaries
     # 4. Return the list of viewport positions for all frames
 
-    # Example starter code:
-    viewport_positions = []
+    # # Example starter code:
+    # viewport_positions = []
 
-    # Initialize with center of first frame if available
-    if frames:
-        height, width = frames[0].shape[:2]
-        prev_x, prev_y = width // 2, height // 2
-    else:
-        return []
+    # # Initialize with center of first frame if available
+    # if frames:
+    #     height, width = frames[0].shape[:2]
+    #     prev_x, prev_y = width // 2, height // 2
+    # else:
+    #     return []
 
     # Your implementation here
+    if not frames:
+        return []
+    
+    height, width = frames[0].shape[:2] 
+    prev_x, prev_y = width // 2, height // 2  # start in center
+    vp_w, vp_h = viewport_size
+    viewport_positions = []
+
+    for frame, motion_boxes in zip(frames, motion_results):
+        # Get the region of interest for this frame
+        cx, cy, _, _ = calculate_region_of_interest(motion_boxes, frame.shape)
+
+        # Apply exponential smoothing
+        smooth_x = int(smoothing_factor * cx + (1 - smoothing_factor) * prev_x)
+        smooth_y = int(smoothing_factor * cy + (1 - smoothing_factor) * prev_y)
+
+        # Keep viewport inside frame
+        half_w = vp_w // 2
+        half_h = vp_h // 2
+        smooth_x = max(half_w, min(width - half_w, smooth_x))
+        smooth_y = max(half_h, min(height - half_h, smooth_y))
+
+        viewport_positions.append((smooth_x, smooth_y))
+
+        prev_x, prev_y = smooth_x, smooth_y
 
     return viewport_positions
